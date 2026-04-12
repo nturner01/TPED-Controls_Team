@@ -12,7 +12,9 @@ void setup(){
     pinMode(pin1, INPUT_PULLUP); -->  sets up reading the top beam
     pinMode(pin2, INPUT_PULLUP); -->  sets up reading the botton beam
     */
-   Serial.begin(9600);
+	pinMode(pin1, INPUT_PULLUP);
+	pinMode(pin2, INPUT_PULLUP);
+   	Serial.begin(9600);
 }
 
 void loop(){
@@ -27,5 +29,24 @@ void loop(){
 
     Note: If you have a pushbutton, you need to make sure your code recognizes when the button actually goes from not pressed to pressed, not just being held down!
     */
+	// Get readings for both pins
+	bool read1 = digitalRead(pin1);
+	bool read2 = digitalRead(pin2);
+
+	// Logic for reading of both HIGH
+	if (read1 == HIGH && read2 == HIGH) {
+		Serial.println("Mode: Auto");
+	}
+
+	// Logic for reading of pin1 LOW and pin2 HIGH
+	if (read1 == LOW) {
+		Serial.println("Mode: Continuous Auto");
+	}
+
+	// Logic for reading of pin1 HIGH and pin2 LOW
+	if (read2 == LOW) {
+		Serial.println("Mode: Maintenance")
+	}
+	
 }
 
