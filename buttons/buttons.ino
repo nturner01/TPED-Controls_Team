@@ -1,6 +1,6 @@
 // Feel free to rename these to make your code more readable! Leave the values to 0, we'll assign these later
-const int pin1 = 0;
-const int pin2 = 0;
+const int topLine = 10;
+const int bottomLine = 7;
 
 void setup(){
     /*
@@ -12,9 +12,9 @@ void setup(){
     pinMode(pin1, INPUT_PULLUP); -->  sets up reading the top beam
     pinMode(pin2, INPUT_PULLUP); -->  sets up reading the botton beam
     */
-	pinMode(pin1, INPUT_PULLUP);
-	pinMode(pin2, INPUT_PULLUP);
-   	Serial.begin(9600);
+	pinMode(topLine, INPUT_PULLUP);
+	pinMode(bottomLine, INPUT_PULLUP);
+  Serial.begin(9600);
 }
 
 void loop(){
@@ -30,23 +30,25 @@ void loop(){
     Note: If you have a pushbutton, you need to make sure your code recognizes when the button actually goes from not pressed to pressed, not just being held down!
     */
 	// Get readings for both pins
-	bool read1 = digitalRead(pin1);
-	bool read2 = digitalRead(pin2);
+	bool top = digitalRead(topLine);
+	bool bottom = digitalRead(bottomLine);
 
 	// Logic for reading of both HIGH
-	if (read1 == HIGH && read2 == HIGH) {
+	if (top == HIGH && bottom == HIGH) {
 		Serial.println("Mode: Auto");
 	}
 
 	// Logic for reading of pin1 LOW and pin2 HIGH
-	if (read1 == LOW) {
+	else if (top == LOW) {
 		Serial.println("Mode: Continuous Auto");
 	}
 
 	// Logic for reading of pin1 HIGH and pin2 LOW
-	if (read2 == LOW) {
-		Serial.println("Mode: Maintenance")
+	else if (bottom == LOW) {
+		Serial.println("Mode: Maintenance");
 	}
+
+	delay(1000);
 	
 }
 
