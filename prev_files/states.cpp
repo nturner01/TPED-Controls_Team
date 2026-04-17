@@ -59,8 +59,22 @@ int main(){
             motors.stop();
             break;
         }
-        // TODO: Implement your case statement here (don't delete the default statement or you'll get an error)
-        // Change the "state" variable above to your state if you want to test your code!
+        
+        case READY:
+        {
+            bool estop = readEStopButton();
+            bool dispatch = readDispatchButton();
+            OperationalMode reading = readOperationalMode();
+
+            if (estop == HIGH) {state = EMERGENCY; break;}
+            if (reading == MAINTENANCE_MODE) {state = IDLE_MAINT; break;}
+            if (dispatch == HIGH) {state = DISPATCHED; break;}
+
+            std::cout << "Current state = READY" << std::endl;
+            breaks.close();
+            motors.stop();
+        }
+        
         default:
             std::cout << "If this prints you did something wrong :P\n";
             break;
