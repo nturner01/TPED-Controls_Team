@@ -2,17 +2,24 @@
 const int pin1 = 0;
 const int pin2 = 0;
 
+#define HIGH 1
+#define LOW 0
+
 void setup(){
     /*
     If you have an LED button:
     pinMode(pin1, INPUT_PULLUP); --> sets up reading the pressing of the button
     pinMode(pin2, OUTPUT); --> sets up lighting up the LED
 
+
     If you have a toggle button:
     pinMode(pin1, INPUT_PULLUP); -->  sets up reading the top beam
     pinMode(pin2, INPUT_PULLUP); -->  sets up reading the botton beam
     */
-   Serial.begin(9600);
+
+    pinMode(sensor1, INPUT_PULLUP);
+    pinMode(sensor2, INPUT_PULLUP);
+    Serial.begin(9600);
 }
 
 void loop(){
@@ -27,5 +34,23 @@ void loop(){
 
     Note: If you have a pushbutton, you need to make sure your code recognizes when the button actually goes from not pressed to pressed, not just being held down!
     */
-}
+   int readingSensor1 = digitalRead(sensor1);
+   int readingSensor2 = digitalRead(sensor2);
 
+   // nothing pressed, idle
+   if (readingSensor1 == HIGH && readingSensor2 == HIGH){
+    Serial.println("eStop idle")
+   }
+
+   if (readingSensor1 == LOW && readingSensor2 == HIGH){
+    Serial.println("pressing eStop")
+   }
+
+   if (readingSensor1 == LOW && readingSensor2 == LOW){
+    Serial.println("eStop pressed")
+   }
+   
+   if (readingSensor1 == HIGH && readingSensor2 == LOW){
+    Serial.println("eStop releasing")
+   }
+}
