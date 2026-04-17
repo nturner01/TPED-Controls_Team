@@ -1,14 +1,15 @@
 #pragma once
 // Holds the current operational mode
-enum OperationalMode{
-    CONTINUOUS_MODE,
+enum toggleState{
+   // CENTER
     AUTOMATIC_MODE,
-    MAINTENANCE_MODE
-};
-
-// Holds the direction of the drive selector switch while in maintenance mode
-enum MaintenanceMode{ 
-    REVERSE_MODE = -1,
     NEUTRAL_MODE,
-    FORWARD_MODE
+
+    // RIGHT
+    MAINTENANCE_MODE,
+    FORWARD_MODE,
+
+    // LEFT
+    CONTINUOUS_MODE,
+    REVERSE_MODE
 };
