@@ -1,187 +1,194 @@
-#include <iostream>
-#include "classes.h"
-#include "inputs.h"
+#include "enums.h"
+#include "pinouts.h"
+#include "dummy.h"
 
-enum CurrentState{
-    IDLE, // IDLE BLOCKED
-    READY, // IDLE READY
-    REVERSE, // REVERSE BLOCKED
-    DISPATCHED, // DISPATCHED BLOCKED
-    FORWARD, // FORWARD BLOCKED
-    IDLE_MAINT, // IDLE MAINTENANCE
-    REVERSE_MAINT, // REVERSE MAINTENANCE
-    FORWARD_MAINT, // FORWARD MAINTENANCE
-    EMERGENCY, // IDLE EMERGENCY
-};
+CurrentState currState = IDLE;
+CurrentState newState;
+int phase = 0;
 
-
-Motor motors; // reverse, forward, stop
-Break breaks; // open, close
-
-// See inputs.h for dummy functions
-
-// Default when ride starts. Change this if you want to test your code!
-enum CurrentState state = IDLE; 
-int main(){
-    switch(state){
-        /*
-        Example of IDLE for reference
-        Each case should do the following:
-            1. Read buttons with valid transitions using dummy functions from inputs.h
-            2. Change state and break. Notice checking the ordering is deliberately from most to least precedence
-            3. Act on current state.
-        */
-        case IDLE: 
-        {
-            // Part 1: Read buttons
-            bool estop = readEStopButton();
-            bool station = readStationSensor();
-            OperationalMode reading = readOperationalMode();
-
-            // Part 2: Check buttons and update states.
-            // Look at FSM for this!
-            if(estop == HIGH){
-                state = EMERGENCY;
+void setup(){
+    Serial.begin(9600);
+    delay(100);
+    // set up classes here
+    Serial.println("Ride initalized");
+    Serial.println("Current state = IDLE");
+}
+void loop(){
+    switch(currState){
+        case IDLE: {
+            if(readEStopButton()){
+                newState = EMERGENCY;
                 break;
             }
-            if(reading == MAINTENANCE_MODE){
-                state = IDLE_MAINT;
+            if(readOperationalMode() == MAINTENANCE_MODE){
+                newState = IDLE_MAINT;
                 break;
             }
-            if(station == HIGH){
-                state = READY;
+            if(readFrontSensor()){
+                newState = READY;
                 break;
             }
-
-            // Part 3: Act on current state if we're still here
-            std::cout << "Current state = IDLE" << std::endl;
-            breaks.close();
             motors.stop();
+            brakes.close();
             break;
         }
+
+        case READY: {
+            if(readEStopButton()){
+                newState = EMERGENCY;
+                break;
+            }
+            if(readOperationalMode() == MAINTENANCE_MODE){
+                newState = IDLE_MAINT;
+                break;
+            }
+            if(readDispatchButton()){
+                newState = REVERSE;
+                break;
+            }
+            if(readOperationalMode() == AUTOMATIC_MODE){
+                newState = REVERSE;
+                break;
+            }
+
+            breaks.close();
+            motors.stop();
+            break;    
+        }
+
+        case REVERSE: {
+            if(readEStopButton()){
+                newState = EMERGENCY;
+                break;
+            }
+            if(readLiftSensor()){
+                phase = 0;
+                newState = DISPATCHED;
+                break;
+            }
+
+            // NOTE: may need to change in the future for motor grouping using back sesnor
+            motors.reverse();
+            brakes.open():
+            break;
+        }
+
+        case DISPATCHED: {
+            if(readEStopButton()){
+                newState = EMERGENCY;
+                break;
+            }
+            
+            // TODO: Phase detection
+            
+            brakes.open();
+            motors.stop();
+            break;    
+        }
+
+        case FORWARD: {
+            if(readEStopButton()){
+                newState = EMERGENCY;
+                break;
+            }
+            if(readFrontSensor()){
+                newState = READY;
+                break;
+            }
+            
+            brakes.open();
+            motors.forward();
+            break;    
+        }
         
-        // TODO: Implement your case statement here (don't delete the default statement or you'll get an error)
-        // Change the "state" variable above to your state if you want to test your code!
-        case IDLE_MAINT:
-        {
-            // Part 1: Read buttons
-            bool estop = readEStopButton();
-            OperationalMode reading = readOperationalMode();
-            MaintenanceMode readingMaint readMaintenanceMode();
+        case IDLE_MAINT: {
+            if(readEStopButton()){
+                newState = EMERGENCY;
+                break;
+            }
+            if(readOperationalMode() != MAINTENANCE_MODE){
+                newState = IDLE;
+                break;
+            }
+            if(readMaintenanceMode() == REVERSE_MODE){
+                newState = REVERSE_MAINT;
+                break;
+            }
+            if(readMaintenanceMode() == FORWARD_MODE){
+                newState = FORWARD_MAINT;
+                break;
+            }
+        
 
-            // Part 2: Check buttons and update states.
-            // Look at FSM for this!
-            if(reading == AUTOMATIC_MODE){
-                state = IDLE;
-                break;
-            }
-            if(reading == CONTINUOUS_MODE){
-                state = IDLE;
-                break;
-            }
-            if(readingMaint == REVERSE_MODE){
-                state = REVERSE_MAINT;
-                break;
-            }
-            if(readingMaint == FORWARD_MODE){
-                state = FORWARD_MAINT;
-                break;
-            }
-            if(estop == HIGH){
-                state = EMERGENCY;
-                break;
-            }
-
-            // Part 3: Act on current state if we're still here
-            std::cout << "Current state = IDLE_MAINT" << std::endl;
             breaks.close();
             motors.stop();
             break;
         }
  
-        case FORWARD_MAINT:
-        {
-            // Part 1: Read buttons
-            bool estop = readEStopButton();
-            bool station = readStationSensor();
-            MaintenanceMode readingMaint readMaintenanceMode();
-
-            // Part 2: Check buttons and update states.
-            // Look at FSM for this!
-            
-            if(readingMaint == NEUTRAL_MODE){
-                state = IDLE_MAINT;
+        case FORWARD_MAINT: {
+            if(readEStopButton()){
+                newState = EMERGENCY;
                 break;
             }
-            if(readingMaint == REVERSE_MODE){
-                state = REVERSE_MAINT;
+            if(readOperationalMode() != MAINTENANCE_MODE){
+                newState = IDLE;
                 break;
             }
-            if(reading == AUTOMATIC_MODE){
-                state = IDLE;
+            if(readMaintenanceMode() == NEUTRAL_MODE || readFrontSensor()){
+                newState = IDLE_MAINT;
                 break;
             }
-            if(reading == CONTINUOUS_MODE){
-                state = IDLE;
-                break;
-            }
-            if(station == HIGH){
-                state = IDLE_MAINT;
-                break;
-            }
-            if(estop == HIGH){
-                state = EMERGENCY;
+            if(readMaintenanceMode() == REVERSE_MODE){
+                newState = REVERSE_MAINT;
                 break;
             }
 
-            // Part 3: Act on current state if we're still here
-            std::cout << "Current state = FORWARD_MAINT" << std::endl;
-            breaks.close();
-            motors.stop();
+            brakes.open();
+            motors.forward();
             break;
         }
-        case REVERSE_MAINT:
-        {
-            bool estop = readEStopButton();
-            bool lift = readLiftSensor();
-            MaintenanceMode readingMaint readMaintenanceMode();
 
-            // Part 2: Check buttons and update states.
-            // Look at FSM for this!
-            
-            if(reading == AUTOMATIC_MODE){
-                state = IDLE;
+        case REVERSE_MAINT: {
+            if(readEStopButton()){
+                newState = EMERGENCY;
                 break;
             }
-            if(reading == CONTINUOUS_MODE){
-                state = IDLE;
-                break;
-            }if(readingMaint == NEUTRAL_MODE){
-                state = IDLE_MAINT;
+            if(readOperationalMode() != MAINTENANCE_MODE){
+                newState = IDLE;
                 break;
             }
-            if(readingMaint == FORWARD_MODE){
-                state = FORWARD_MAINT;
+            if(readMaintenanceMode() == NEUTRAL_MODE || readLiftSensor()){
+                newState = IDLE_MAINT;
                 break;
             }
-            if(lift == HIGH){
-                state = IDLE_MAINT;
-                break;
-            }
-            if(estop == HIGH){
-                state = EMERGENCY;
+            if(readMaintenanceMode() == FORWARD_MODE){
+                newState = FORWARD_MAINT;
                 break;
             }
 
-            // Part 3: Act on current state if we're still here
-            std::cout << "Current state = REVERSE_MAINT" << std::endl;
-            breaks.close();
-            motors.stop();
+            brakes.open();
+            motors.reverse();
             break;
+        }
+
+        case EMERGENCY: {
+            if(!readEStopButton() && readEStopReset()){
+                // Note: Verify ride functionality before returning here. Currently just makes sure estop is up
+                newState = IDLE;
+            }
+            brakes.close();
+            motors.stop();
         }
 
         default:
-            std::cout << "If this prints you did something wrong :P\n";
+            Serial.println("ERROR");
+            newState = IDLE;
             break;
+    }
+
+    if(currState != newState){
+        currState = newState;
+        Serial.print("Current state = ");
+        Serial.println(currState);
     }
 }

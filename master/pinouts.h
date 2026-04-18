@@ -1,15 +1,10 @@
-#pragma once
-// Holds the current operational mode
-enum toggleState{
-   // CENTER
-    AUTOMATIC_MODE,
-    NEUTRAL_MODE,
+#include "led.cpp"
+#include "toggle.cpp"
+#include "sensor.cpp"
 
-    // RIGHT
-    MAINTENANCE_MODE,
-    FORWARD_MODE,
+#define OPERATIONAL_BTN false
+#define MAINTENANCE_BTN true
 
-    // LEFT
-    CONTINUOUS_MODE,
-    REVERSE_MODE
-};
+// Button definitions:
+
+// Sensor defintioins:

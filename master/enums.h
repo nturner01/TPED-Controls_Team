@@ -1,14 +1,27 @@
-#define LOW 0
-#define HIGH 1
+#pragma once
+enum ToggleReading{
+    // Top for operational toggle, bottom for maintenance toggle
+   // CENTER
+    AUTOMATIC_MODE,
+    NEUTRAL_MODE,
 
+    // RIGHT
+    MAINTENANCE_MODE,
+    FORWARD_MODE,
 
+    // LEFT
+    CONTINUOUS_MODE,
+    REVERSE_MODE
+};
 
-
-// Dummy functions for button reading
-bool readDispatchButton(){return LOW;}
-bool readEStopButton(){return LOW;}
-bool readEStopReset(){return LOW;}
-OperationalMode readOperationalMode(){return AUTOMATIC_MODE;}
-MaintenanceMode readMaintenanceMode(){return NEUTRAL_MODE;}
-bool readStationSensor(){return LOW;}
-bool readLiftSensor(){return LOW;}
+enum CurrentState{
+    IDLE, // IDLE BLOCKED
+    READY, // IDLE READY
+    REVERSE, // REVERSE BLOCKED
+    DISPATCHED, // DISPATCHED BLOCKED
+    FORWARD, // FORWARD BLOCKED
+    IDLE_MAINT, // IDLE MAINTENANCE
+    REVERSE_MAINT, // REVERSE MAINTENANCE
+    FORWARD_MAINT, // FORWARD MAINTENANCE
+    EMERGENCY, // IDLE EMERGENCY
+};

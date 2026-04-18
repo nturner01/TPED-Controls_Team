@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "print": "cpp",
+        "locale": "cpp"
+    }
+}
