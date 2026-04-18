@@ -10,7 +10,7 @@ private:
 public:
     void setup(){
         pinMode(topPin, INPUT_PULLUP);
-        pinMode(bottomPin, INPUT_PULLUP);
+        pinMode(botPin, INPUT_PULLUP);
     }
 
     ToggleReading read() {
@@ -30,4 +30,4 @@ public:
 Toggle(bool topPin, bool botPin, bool button):
     topPin(topPin), botPin(botPin), button(button) {}
 
-}
+};

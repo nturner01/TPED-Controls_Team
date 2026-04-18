@@ -7,11 +7,11 @@ int ledPin;
 unsigned long prevTime;
 
 public:
-void blink(int inveral){
+void blink(int interval){
     unsigned long currTime = millis();
     if(currTime - prevTime >= interval){
         prevTime = currTime;
-        digitalWrite(ledPin, !digitalRead(ledPin))
+        digitalWrite(ledPin, !digitalRead(ledPin));
     }
 }
 LED(int buttonPin , int ledPin) : buttonPin(buttonPin), ledPin(ledPin), prevTime(0) {}

@@ -51,7 +51,7 @@ void loop(){
                 break;
             }
 
-            breaks.close();
+            brakes.close();
             motors.stop();
             break;    
         }
@@ -69,7 +69,7 @@ void loop(){
 
             // NOTE: may need to change in the future for motor grouping using back sesnor
             motors.reverse();
-            brakes.open():
+            brakes.open();
             break;
         }
 
@@ -120,7 +120,7 @@ void loop(){
             }
         
 
-            breaks.close();
+            brakes.close();
             motors.stop();
             break;
         }
