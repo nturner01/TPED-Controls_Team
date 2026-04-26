@@ -3,8 +3,8 @@
 
 class Toggle {
 private:
-    bool topPin;
-    bool botPin;
+    int topPin;
+    int botPin;
     bool button; // 0/false for op mode button, 1/true for maint mode button
 
 public:
@@ -27,7 +27,7 @@ public:
         }
     }
 
-Toggle(bool topPin, bool botPin, bool button):
+Toggle(int topPin, int botPin, bool button):
     topPin(topPin), botPin(botPin), button(button) {}
 
 };

@@ -1,52 +1,106 @@
 #include "enums.h"
 #include "pinouts.h"
-#include "dummy.h"
 
-CurrentState currState = IDLE;
-CurrentState newState;
+// for debugging/pre-slave readings
+const char* states[] = {
+    "IDLE",
+    "READY",
+    "REVERSE",
+    "DISPATCHED",
+    "DISPATCHED_2",
+    "FORWARD",
+    "IDLE_MAINT",
+    "REVERSE_MAINT",
+    "FORWARD_MAINT",
+    "EMERGENCY"
+};
+
+
+FiniteState currState = IDLE;
+FiniteState newState = IDLE;
+FiniteState lastReading = IDLE;
+
+// State management vars
 int phase = 0;
+bool ledHold = true;
+
+//debouncing
+unsigned long lastDebounceTime = 0;
+const unsigned long debounceDelay = 50;
+
+// dispatch delay
+unsigned long dispatchedEnterTime = 0;
+const unsigned long dispatchDelay = 2500;
 
 void setup(){
     Serial.begin(9600);
-    delay(100);
-    // set up classes here
+    while (!Serial);  
+
+    dispatch.setup();
+    estop.setup();
+    eReset.setup();
+    
+    operational.setup();
+    maintenance.setup();
+
+    backSensor.setup();
+    frontSensor.setup();
+    liftSensor.setup();
+    
+    delay(1000);
     Serial.println("Ride initalized");
-    Serial.println("Current state = IDLE");
+    Serial.println("IDLE");
 }
+
 void loop(){
     switch(currState){
         case IDLE: {
-            if(readEStopButton()){
+            estop.blink();
+            if(eReset.read() && ledHold){
+                eReset.on();
+            }
+            else{
+                ledHold = false;
+                eReset.off();
+            }
+            
+            if(estop.read()){
+                ledHold = true;
                 newState = EMERGENCY;
                 break;
             }
-            if(readOperationalMode() == MAINTENANCE_MODE){
+            if(operational.read() == MAINTENANCE_MODE){
                 newState = IDLE_MAINT;
                 break;
             }
-            if(readFrontSensor()){
+            if(frontSensor.read()){
                 newState = READY;
                 break;
             }
+            
             motors.stop();
             brakes.close();
             break;
         }
 
         case READY: {
-            if(readEStopButton()){
+            dispatch.blink();
+            estop.blink();
+
+            if(estop.read()){
                 newState = EMERGENCY;
                 break;
             }
-            if(readOperationalMode() == MAINTENANCE_MODE){
+            if(operational.read() == MAINTENANCE_MODE){
                 newState = IDLE_MAINT;
                 break;
             }
-            if(readDispatchButton()){
+            if(dispatch.read()){
+                ledHold = true;
                 newState = REVERSE;
                 break;
             }
-            if(readOperationalMode() == AUTOMATIC_MODE){
+            if(operational.read() == CONTINUOUS_MODE){
                 newState = REVERSE;
                 break;
             }
@@ -57,11 +111,18 @@ void loop(){
         }
 
         case REVERSE: {
-            if(readEStopButton()){
+            estop.blink();
+            if(dispatch.read() && ledHold) dispatch.on();
+            else{
+                ledHold = false;
+                dispatch.off();
+            }
+
+            if(estop.read()){
                 newState = EMERGENCY;
                 break;
             }
-            if(readLiftSensor()){
+            if(liftSensor.read()){
                 phase = 0;
                 newState = DISPATCHED;
                 break;
@@ -73,13 +134,23 @@ void loop(){
             break;
         }
 
-        case DISPATCHED: {
-            if(readEStopButton()){
+        case DISPATCHED:
+        case DISPATCHED_2: {
+            estop.blink();
+
+            if(estop.read()){
                 newState = EMERGENCY;
                 break;
             }
             
-            // TODO: Phase detection
+            // Basic phase detection
+            if (millis() - dispatchedEnterTime >= dispatchDelay) {
+                newState = DISPATCHED_2;
+                if (backSensor.read()) {
+                    newState = FORWARD;
+                    break;
+                }
+            }
             
             brakes.open();
             motors.stop();
@@ -87,11 +158,13 @@ void loop(){
         }
 
         case FORWARD: {
-            if(readEStopButton()){
+            estop.blink();
+
+            if(estop.read()){
                 newState = EMERGENCY;
                 break;
             }
-            if(readFrontSensor()){
+            if(frontSensor.read()){
                 newState = READY;
                 break;
             }
@@ -102,43 +175,48 @@ void loop(){
         }
         
         case IDLE_MAINT: {
-            if(readEStopButton()){
+            estop.blink();
+            dispatch.off();
+
+            if(estop.read()){
                 newState = EMERGENCY;
                 break;
             }
-            if(readOperationalMode() != MAINTENANCE_MODE){
+            if(operational.read() != MAINTENANCE_MODE){
                 newState = IDLE;
                 break;
             }
-            if(readMaintenanceMode() == REVERSE_MODE){
+            if(maintenance.read() == REVERSE_MODE && !liftSensor.read()){
                 newState = REVERSE_MAINT;
                 break;
             }
-            if(readMaintenanceMode() == FORWARD_MODE){
+            if(maintenance.read() == FORWARD_MODE && !frontSensor.read()){
                 newState = FORWARD_MAINT;
                 break;
             }
-        
-
+            
             brakes.close();
             motors.stop();
             break;
         }
  
         case FORWARD_MAINT: {
-            if(readEStopButton()){
+            estop.blink();
+            dispatch.off();
+
+            if(estop.read()){
                 newState = EMERGENCY;
                 break;
             }
-            if(readOperationalMode() != MAINTENANCE_MODE){
+            if(operational.read() != MAINTENANCE_MODE){
                 newState = IDLE;
                 break;
             }
-            if(readMaintenanceMode() == NEUTRAL_MODE || readFrontSensor()){
+            if(maintenance.read() == NEUTRAL_MODE || frontSensor.read()){
                 newState = IDLE_MAINT;
                 break;
             }
-            if(readMaintenanceMode() == REVERSE_MODE){
+            if(maintenance.read() == REVERSE_MODE){
                 newState = REVERSE_MAINT;
                 break;
             }
@@ -149,19 +227,22 @@ void loop(){
         }
 
         case REVERSE_MAINT: {
-            if(readEStopButton()){
+            estop.blink();
+            dispatch.off();
+
+            if(estop.read()){
                 newState = EMERGENCY;
                 break;
             }
-            if(readOperationalMode() != MAINTENANCE_MODE){
+            if(operational.read() != MAINTENANCE_MODE){
                 newState = IDLE;
                 break;
             }
-            if(readMaintenanceMode() == NEUTRAL_MODE || readLiftSensor()){
+            if(maintenance.read() == NEUTRAL_MODE || liftSensor.read()){
                 newState = IDLE_MAINT;
                 break;
             }
-            if(readMaintenanceMode() == FORWARD_MODE){
+            if(maintenance.read() == FORWARD_MODE){
                 newState = FORWARD_MAINT;
                 break;
             }
@@ -172,23 +253,55 @@ void loop(){
         }
 
         case EMERGENCY: {
-            if(!readEStopButton() && readEStopReset()){
+            dispatch.off();
+            if(estop.read()){
+                estop.on();
+                eReset.off();
+            }
+            else{
+                estop.off();
+                eReset.blink();
+            }
+
+            if(!estop.read() && eReset.read()){
                 // Note: Verify ride functionality before returning here. Currently just makes sure estop is up
                 newState = IDLE;
+                break;
             }
+
             brakes.close();
             motors.stop();
+            break;
         }
 
         default:
-            Serial.println("ERROR");
+            Serial.print("ERROR: ");
+            Serial.println(currState);
             newState = IDLE;
             break;
     }
 
-    if(currState != newState){
-        currState = newState;
-        Serial.print("Current state = ");
-        Serial.println(currState);
+    if (newState != lastReading) {
+        lastDebounceTime = millis();
     }
+
+    if ((millis() - lastDebounceTime) >= debounceDelay) {
+        if (currState != newState) {
+            currState = newState;
+            if (currState == DISPATCHED) {
+                dispatchedEnterTime = millis();
+            }
+            // Send signal to slave here:
+            Serial.println(states[currState]);
+            /*
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("Current state: ");
+            lcd.setCursor(0, 1);
+            lcd.print(states[currState]);
+            */
+        }
+    }
+
+    lastReading = newState;
 }

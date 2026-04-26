@@ -11,5 +11,6 @@ void setup(){
 bool read(){
     return digitalRead(sensorPin);
 }
+
 Sensor(int sensorPin) : sensorPin(sensorPin) {}
 };
