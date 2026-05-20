@@ -6,7 +6,7 @@ private:
     int buttonPin;
 
 public:
-    LED(int buttonPin, int ledPin) : buttonPin(buttonPin), ledPin(ledPin), prevTime(0) {}
+    LED(int buttonPin, int ledPin) : buttonPin(buttonPin), ledPin(ledPin) {}
 
     void setup() {
         pinMode(buttonPin, INPUT_PULLUP); 

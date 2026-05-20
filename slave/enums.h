@@ -1,20 +1,5 @@
-#pragma once
-enum ToggleReading{
-    // Top for operational toggle, bottom for maintenance toggle
-   // CENTER
-    AUTOMATIC_MODE,
-    NEUTRAL_MODE,
-
-    // RIGHT
-    MAINTENANCE_MODE,
-    FORWARD_MODE,
-
-    // LEFT
-    CONTINUOUS_MODE,
-    REVERSE_MODE
-};
-
-enum FiniteState : uint8_t {
+#pragma once;
+enum FiniteState : uint8_t{
     OFF,
     IDLE, // IDLE BLOCKED
     READY, // IDLE READY
@@ -27,4 +12,13 @@ enum FiniteState : uint8_t {
     REVERSE_MAINT, // REVERSE MAINTENANCE
     FORWARD_MAINT, // FORWARD MAINTENANCE
     EMERGENCY, // IDLE EMERGENCY
+};
+
+struct BoardPins {
+  int leftEna;
+  int rightEna;
+  int in1;
+  int in3;
+  int in2;
+  int in4;
 };

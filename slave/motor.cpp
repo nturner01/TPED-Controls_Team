@@ -1,47 +1,71 @@
 #include <Arduino.h>
-#include "actuator.cpp"
+#include "enums.h"
 #pragma once
+
 class Motor{
 private:
-int enaPin;
-int in1;
-int in2;
+BoardPins board;
 
-Actuator a1;
-Actuator a2;
+bool isForward = false;
+bool isReverse = false;
 
 public:
 void setup(){
-    pinMode(enaPin, OUTPUT);
-    pinMode(in1, OUTPUT);
-    pinMode(in2, OUTPUT);
+    pinMode(board.leftEna, OUTPUT);
+    pinMode(board.rightEna, OUTPUT);
+    pinMode(board.in1, OUTPUT);
+    pinMode(board.in2, OUTPUT);
+    pinMode(board.in3, OUTPUT);
+    pinMode(board.in4, OUTPUT);
 }
 
-void stop() {
-    analogWrite(enaPin, 0);
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
-}
-void forward(int speed = 150){
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-    analogWrite(enaPin, speed);
-}
-void reverse(int speed = 150){
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-    analogWrite(enaPin, speed);
+void off() {
+    if(isForward || isReverse){
+        isForward = false;
+        isReverse = false;
+
+        digitalWrite(board.in1, LOW);
+        digitalWrite(board.in2, LOW);
+        digitalWrite(board.in3, LOW);
+        digitalWrite(board.in4, LOW);
+        analogWrite(board.leftEna, 255);
+        analogWrite(board.rightEna, 255);
+    }
 }
 
-void close(){
-    a1.close();
-    a2.close();
+void forward(){
+    if(!isForward){
+        isForward = true;
+        isReverse = false;
+
+        digitalWrite(board.in1, HIGH);
+        digitalWrite(board.in3, HIGH);
+
+        digitalWrite(board.in2, LOW);
+        digitalWrite(board.in4, LOW);
+
+        analogWrite(board.leftEna, 255);
+        analogWrite(board.rightEna, 255);
+    }
 }
-void open(){
-    a1.open();
-    a2.open();
+
+void reverse(){
+    if(!isReverse){
+        isReverse = true;
+        isForward = false;
+
+        digitalWrite(board.in1, LOW);
+        digitalWrite(board.in3, LOW);
+
+        digitalWrite(board.in2, HIGH);
+        digitalWrite(board.in4, HIGH);
+
+        analogWrite(board.leftEna, 255);
+        analogWrite(board.rightEna, 255);
+    }
 }
-Motor(int enaPin, int in1, int in2, int a1Pin, int a2Pin) :
-    enaPin(enaPin), in1(in1), in2(in2),
-    a1(a1Pin), a2(a2Pin) {}
+
+Motor(BoardPins board) {
+    this->board = board;
+}
 };
